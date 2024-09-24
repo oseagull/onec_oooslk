@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://v8.1c.ru/v8/tech-log">
+	<dump create="true" location="C:\DUMPS" type="3" prntscrn="false" externaldump="1"/>
+	<log location="/var/log/1C" history="12">
+		<event>
+			<eq property="Name" value="EXCP"/>
+		</event>
+		<event>
+			<eq property="Name" value="PROC"/>
+		</event>
+		<event>
+			<eq property="Name" value="ADMIN"/>
+		</event>
+		<event>
+			<eq property="Name" value="CONN"/>
+		</event>
+		<event>
+			<eq property="Name" value="SESN"/>
+		</event>
+		<event>
+			<eq property="Name" value="CLSTR"/>
+		</event>
+		<event>
+			<eq property="Name" value="SRVC"/>
+		</event>
+		<property name="all"/>
+	</log>
+</config>

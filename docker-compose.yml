@@ -1,0 +1,130 @@
+version: '3.8'
+
+x-db_common_config: &db_config
+    image: ${DOCKER_REGISTRY_URL}/pgp16:latest
+    networks:
+      - onec_net
+    restart: always
+    expose:
+      - ${PG_PORT}
+
+services:
+  srv:
+    image: ${DOCKER_REGISTRY_URL}/onec-server:${ONEC_VERSION}
+    container_name: onec-srv_${ONEC_VERSION}
+    restart: always
+    ports:
+      - "1540-1541:1540-1541"
+      - "1560-1591:1560-1591"
+      - "1545:1545"
+    volumes:
+      - srv_data:${SRV_DATA}
+      - srv_log:${SRV_LOG}
+    environment:
+      - TZ=${TZ}
+    networks:
+      - onec_net
+
+  db_small:
+    <<: *db_config
+    container_name: onec-pgpro16-small
+    environment:
+      - PG_PASSWORD=${PG_PASSWORD}
+    hostname: db_small
+    volumes:
+      - pg_data_small:${PGDATA}
+
+  db_big:
+    <<: *db_config
+    container_name: onec-pgpro16-big
+    environment:
+      - INCLUDE_PGDEFAULT=yes
+      - PG_PASSWORD=${PG_PASSWORD}
+    hostname: db_big
+    volumes:
+      - pg_data_big:${PGDATA}
+
+  pusk:
+    image: segateekb/pusk:latest
+    container_name: pusk
+    hostname: pusk
+    volumes:
+      - pusk_data:${PUSK_DATA}
+      - pusk_log:${PUSK_LOG}
+    restart: always
+    networks:
+      - onec_net
+    depends_on:
+      - srv
+    expose:
+      - 8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pusk.rule=Host(`onec.oooslk.ru`)"
+      - "traefik.http.routers.pusk.entrypoints=web"
+      - "traefik.http.services.pusk.loadbalancer.server.port=8080"
+      - "traefik.http.routers.pusk.middlewares=auth"
+
+
+  traefik: 
+    image: traefik:v2.5
+    container_name: traefik
+    environment:
+    - PUSK_PASS=${PUSK_PASS}
+    command:
+    - "--api.insecure=true"
+    - "--providers.docker=true"
+    - "--providers.docker.exposedByDefault=false"
+    - "--entrypoints.web.address=:80"
+    # - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      # - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # - ./traefik.yml:/etc/traefik/traefik.yml
+    depends_on:
+      - pusk
+    restart: always
+    networks:
+      - onec_net 
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.middlewares.auth.basicauth.users=${PUSK_PASS}"
+
+volumes:
+  srv_data: {}
+  srv_log: {}
+  pusk_data: {}
+  pusk_log: {}
+  pg_data_small: {}
+  pg_data_big: {}
+
+
+
+networks:
+  onec_net:
+    driver: bridge
+
+
+  # db:
+  #   image: ${DOCKER_REGISTRY_URL}/pgp16:latest
+  #   networks:
+  #     - onec_net
+  #   restart: always
+  #   environment:
+  #     - PG_PASSWORD=${PG_PASSWORD}
+  #   expose:
+  #     - ${PG_PORT}
+  #   container_name: onec-pgpro16
+  #   volumes:
+  #     - pg_data:${PGDATA}
+
+
+
+
+
+
+
+
+
