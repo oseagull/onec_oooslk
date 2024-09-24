@@ -22,7 +22,7 @@ The project uses environment variables for configuration. Create a `.env` and `.
 `.env.example`
 `.onec.env.example`
 
-The varible INCLUDE_PGDEFAULT=yes appends the content of pgdefault.conf file to postgresql.conf file. If you want to specify any custom parameters for your PostgreSQL server you can do it there.
+The varible `INCLUDE_PGDEFAULT=yes` appends the content of `pgdefault.conf` file to `postgresql.conf` file in container. If you want to specify any custom parameters for your PostgreSQL server you can do it there.
 
 ## Building the 1C:Enterprise Server Image
 
