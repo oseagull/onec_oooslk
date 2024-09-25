@@ -37,10 +37,58 @@ change_directory_permissions() {
   chown -R usr1cv8:grp1cv8 /home/usr1cv8
 }
 
+# Function to read and process .webinst.env file
+process_webinst_env() {
+  if [ -f "/usr/local/bin/.webinst.env" ]; then
+    source /usr/local/bin/.webinst.env
+    
+    if [ -z "$WWW_ROOT" ] || [ -z "$WEBINST_PATH" ] || [ -z "$DATABASES" ]; then
+      echo "Error: .webinst.env file is missing required variables."
+      return 1
+    fi
+
+    # Create WWW root directory if it doesn't exist
+    mkdir -p "$WWW_ROOT"
+
+    # Process each database
+    for DB_NAME in $DATABASES; do
+      DB_DIR="$WWW_ROOT/$DB_NAME"
+      
+      # Create directory for the database
+      mkdir -p "$DB_DIR"
+      
+      # Run webinst command
+      WEBINST_CMD="$WEBINST_PATH -apache24 -wsdir $DB_NAME -dir '$DB_DIR' -connstr 'Srvr=\"onec-docker\";Ref=\"$DB_NAME\";'"
+      echo "Running webinst for $DB_NAME"
+      echo "Command: $WEBINST_CMD"
+      eval "$WEBINST_CMD"
+    done
+  else
+    echo "Warning: .webinst.env file not found. Skipping webinst processing."
+  fi
+}
+
+# Function to check for changes and apply them
+check_and_apply_changes() {
+  local last_md5sum=""
+  while true; do
+    current_md5sum=$(md5sum /usr/local/bin/.webinst.env | awk '{print $1}')
+    if [ "$current_md5sum" != "$last_md5sum" ]; then
+      echo "Configuration changed. Applying updates..."
+      process_webinst_env
+      echo "Restarting Apache..."
+      apachectl graceful  # Gracefully restart Apache
+      last_md5sum=$current_md5sum
+    fi
+    sleep 600
+  done
+}
+
 # Главная функция скрипта
 main() {
   setup_defaults
   change_directory_permissions
+  process_webinst_env
 
   if [ "$1" = "ragent" ]; then
     setup_ragent_cmd
@@ -53,6 +101,15 @@ main() {
     echo "Запускаем ragent с необходимыми параметрами"
     echo "Выполняемая команда: $RAGENT_CMD"
     exec $RAGENT_CMD 2>&1
+
+    # Start Apache
+    echo "Starting Apache..."
+    apachectl start
+
+    # Start the change detection loop
+    check_and_apply_changes &
+    # Wait for all background processes
+    wait
   else
     # Если первый аргумент не 'ragent', выполняем команду, переданную в аргументах
     "$@"
