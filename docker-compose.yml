@@ -12,18 +12,26 @@ services:
   srv:
     image: ${DOCKER_REGISTRY_URL}/onec-server:${ONEC_VERSION}
     container_name: onec-srv_${ONEC_VERSION}
+    hostname: onec-docker
     restart: always
-    ports:
-      - "1540-1541:1540-1541"
-      - "1560-1591:1560-1591"
-      - "1545:1545"
     volumes:
       - srv_data:${SRV_DATA}
       - srv_log:${SRV_LOG}
+      - .webinst.env:/usr/local/bin/.webinst.env:ro
     environment:
       - TZ=${TZ}
     networks:
       - onec_net
+    expose:
+      - "1540-1541"
+      - "1560-1591"
+      - "1545"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.srv.rule=Host(`onec.oooslk.ru`) && PathPrefix(`/gilevspeddtest/`)"
+      - "traefik.http.routers.srv.entrypoints=web"
+      - "traefik.http.services.srv.loadbalancer.server.port=80"
 
   db_small:
     <<: *db_config
@@ -76,21 +84,24 @@ services:
     - "--providers.docker=true"
     - "--providers.docker.exposedByDefault=false"
     - "--entrypoints.web.address=:80"
-    # - "--entrypoints.websecure.address=:443"
+    - "--entrypoints.pusk.address=:8000"
     ports:
       - "80:80"
-      # - "8080:8080"
+      - "8000:8000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # - ./traefik.yml:/etc/traefik/traefik.yml
     depends_on:
       - pusk
+      - srv
     restart: always
     networks:
       - onec_net 
     labels:
     - "traefik.enable=true"
     - "traefik.http.middlewares.auth.basicauth.users=${PUSK_PASS}"
+    - "traefik.http.routers.pusk-router.rule=Host(`onec.oooslk.ru`)"
+    - "traefik.http.routers.pusk-router.entrypoints=pusk"
+    - "traefik.http.routers.pusk-router.service=pusk"
 
 volumes:
   srv_data: {}
@@ -105,26 +116,3 @@ volumes:
 networks:
   onec_net:
     driver: bridge
-
-
-  # db:
-  #   image: ${DOCKER_REGISTRY_URL}/pgp16:latest
-  #   networks:
-  #     - onec_net
-  #   restart: always
-  #   environment:
-  #     - PG_PASSWORD=${PG_PASSWORD}
-  #   expose:
-  #     - ${PG_PORT}
-  #   container_name: onec-pgpro16
-  #   volumes:
-  #     - pg_data:${PGDATA}
-
-
-
-
-
-
-
-
-

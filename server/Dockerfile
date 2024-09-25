@@ -115,7 +115,7 @@ COPY ./server/logcfg.xml /opt/1cv8/current/conf
 COPY ./server/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN ln -s usr/local/bin/docker-entrypoint.sh /  # backwards compat
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh 
-RUN apt-get update && apt-get install -yq procps
+RUN apt-get update && apt-get install -yq procps apache2
 RUN chmod +x /opt/1cv8/current/ragent && \
     chmod -x /opt/1cv8/current/dbda
 
