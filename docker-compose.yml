@@ -17,9 +17,10 @@ services:
     volumes:
       - srv_data:${SRV_DATA}
       - srv_log:${SRV_LOG}
-      - .webinst.env:/usr/local/bin/.webinst.env:ro
     environment:
       - TZ=${TZ}
+      - INFOBASE_NAMES=${INFOBASE_NAMES}
+      - GROUP_NAME=${GROUP_NAME}
     networks:
       - onec_net
     expose:
@@ -29,7 +30,7 @@ services:
       - "80"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.srv.rule=Host(`onec.oooslk.ru`) && PathPrefix(`/gilevspeddtest/`)"
+      - "traefik.http.routers.srv.rule=Host(`onec.oooslk.ru`)"
       - "traefik.http.routers.srv.entrypoints=web"
       - "traefik.http.services.srv.loadbalancer.server.port=80"
 
@@ -69,7 +70,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pusk.rule=Host(`onec.oooslk.ru`)"
-      - "traefik.http.routers.pusk.entrypoints=web"
+      - "traefik.http.routers.pusk.entrypoints=pusk"
       - "traefik.http.services.pusk.loadbalancer.server.port=8080"
       - "traefik.http.routers.pusk.middlewares=auth"
 
@@ -99,9 +100,6 @@ services:
     labels:
     - "traefik.enable=true"
     - "traefik.http.middlewares.auth.basicauth.users=${PUSK_PASS}"
-    - "traefik.http.routers.pusk-router.rule=Host(`onec.oooslk.ru`)"
-    - "traefik.http.routers.pusk-router.entrypoints=pusk"
-    - "traefik.http.routers.pusk-router.service=pusk"
 
 volumes:
   srv_data: {}
