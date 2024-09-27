@@ -18,10 +18,9 @@ The setup includes:
 
 ## Configuration
 
-The project uses environment variables for configuration. Create a `.env` `.webinst.env` and `.onec.env` files in the project root from the examples:
+The project uses environment variables for configuration. Create a `.env` and `.onec.env` files in the project root from the examples:
 `.env.example`
 `.onec.env.example`
-`.webinst.env.example`
 
 The varible `INCLUDE_PGDEFAULT=yes` appends the content of `pgdefault.conf` file to `postgresql.conf` file in container. If you want to specify any custom parameters for your PostgreSQL server you can do it there.
 
