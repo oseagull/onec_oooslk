@@ -37,9 +37,9 @@ This will start all services defined in the `docker-compose.yml` file.
 
 ## Services
 
-- **1C:Enterprise Server**: Runs on ports 1540-1541, 1560-1591, and 1545. Also runs apache2 server to publish infobases from cluster.
+- **1C:Enterprise Server**: Runs on ports `1540-1541, 1560-1591, 1545` accessible internally. Also runs `apache2` server on port `80` to publish infobases from cluster. Infobases are accessible via traefik service at `http://onec.oooslk.ru/infobase-name` on port `80`
 - **PostgreSQL Databases**: Two instances (small and big) running internally
-- **Pusk Service**: Accessible via Traefik at `http://onec.oooslk.ru`
+- **Pusk Service**: Accessible via Traefik at `http://onec.oooslk.ru:8000`. Login and password defined in `$PUSK_PASS` required.
 - **Traefik**: Acts as a reverse proxy and handles basic authentication
 
 ## Volumes
