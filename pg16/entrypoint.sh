@@ -60,11 +60,12 @@ configure_postgresql() {
 
     log "Appending custom settings to postgresql.conf..."
     {
-        echo "# Custom settings"
+        echo ""
+        echo "# Custom settings added by entrypoint script"
         echo "synchronous_commit = off"
         echo "unix_socket_directories = '/tmp,$PGSOCKET'"
         echo "listen_addresses = '*'"
-		echo 
+        echo 
 
         if [ "${INCLUDE_PGDEFAULT:-no}" = "yes" ] && [ -f /pgdefault.conf ]; then
             echo ""  # Add a newline for clarity
@@ -102,7 +103,14 @@ if [ "$1" = 'postgres' ]; then
     if [ ! -s "$PGDATA/PG_VERSION" ]; then
         log "PG_VERSION not found. Initializing database..."
         initialize_database
-        log "Database initialized. Configuring PostgreSQL..."
+        log "Database initialized."
+    else
+        log "Existing database found. Skipping initialization."
+    fi
+
+    log "Checking if PostgreSQL configuration needs to be updated..."
+    if ! grep -q "# Custom settings added by entrypoint script" "$PGDATA/postgresql.conf"; then
+        log "Custom configuration not found. Configuring PostgreSQL..."
         log "Checking write permissions for $PGDATA"
         if [ -w "$PGDATA" ]; then
             log "$PGDATA is writable"
@@ -113,7 +121,7 @@ if [ "$1" = 'postgres' ]; then
             exit 1
         fi
     else
-        log "Existing database found. Skipping initialization and configuration."
+        log "Custom configuration already present. Skipping configuration."
     fi
 
     # Ensure PGSOCKET directory exists and has correct permissions

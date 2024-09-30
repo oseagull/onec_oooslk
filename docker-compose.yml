@@ -10,17 +10,21 @@ x-db_common_config: &db_config
 
 services:
   srv:
-    image: ${DOCKER_REGISTRY_URL}/onec-server:${ONEC_VERSION}
-    container_name: onec-srv_${ONEC_VERSION}
+    image: $DOCKER_REGISTRY_URL/onec-server:$ONEC_VERSION
+    container_name: onec-docker
     hostname: onec-docker
     restart: always
+    stop_grace_period: 30s
+    ports:
+      - "1540-1541:1540-1541"
+      - "1560-1591:1560-1591"
+      - "1545:1545"
     volumes:
       - srv_data:${SRV_DATA}
       - srv_log:${SRV_LOG}
     environment:
       - TZ=${TZ}
       - INFOBASE_NAMES=${INFOBASE_NAMES}
-      - GROUP_NAME=${GROUP_NAME}
     networks:
       - onec_net
     expose:
@@ -30,14 +34,17 @@ services:
       - "80"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.srv.rule=Host(`onec.oooslk.ru`)"
+      - "traefik.http.routers.srv.rule=Host(`onec.oooslk.ru`) && PathPrefix(`/`)"
       - "traefik.http.routers.srv.entrypoints=web"
       - "traefik.http.services.srv.loadbalancer.server.port=80"
 
   db_small:
     <<: *db_config
     container_name: onec-pgpro16-small
+    ports:
+      - "${PG_PORT}:${PG_PORT}"
     environment:
+      - INCLUDE_PGDEFAULT=yes
       - PG_PASSWORD=${PG_PASSWORD}
     hostname: db_small
     volumes:

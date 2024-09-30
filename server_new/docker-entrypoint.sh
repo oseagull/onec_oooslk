@@ -55,7 +55,26 @@ start_apache() {
     apache2ctl -D FOREGROUND &
 }
 
-# Main function
+# New function to handle signals
+handle_signal() {
+    echo "Received shutdown signal. Shutting down gracefully..."
+    
+    # Stop Apache
+    echo "Stopping Apache..."
+    apache2ctl stop
+    
+    # Stop RAS
+    echo "Stopping RAS..."
+    pkill -f "/opt/1cv8/current/ras"
+    
+    # Stop ragent (this will also end the script due to 'exec')
+    echo "Stopping ragent..."
+    pkill -f "/opt/1cv8/current/ragent"
+    
+    exit 0
+}
+
+# Modified main function
 main() {
     setup_defaults
     change_directory_permissions
@@ -64,6 +83,10 @@ main() {
         setup_ragent_cmd
         setup_ras_cmd
         publish_1c_infobases
+        
+        # Set up signal handling
+        trap 'handle_signal' SIGTERM SIGINT
+
         start_apache
 
         echo "Starting ras with required parameters"
@@ -72,7 +95,12 @@ main() {
 
         echo "Starting ragent with required parameters"
         echo "Command: $RAGENT_CMD"
-        exec $RAGENT_CMD 2>&1
+        
+        # Run ragent in the foreground, but don't use 'exec'
+        $RAGENT_CMD 2>&1 &
+        
+        # Wait for any signal
+        wait
     else
         exec "$@"
     fi

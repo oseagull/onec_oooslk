@@ -3,7 +3,6 @@
 *.run
 .env
 .onec.env
-.webinst.env
 build_info.txt
 .DS_Store
 dive.log

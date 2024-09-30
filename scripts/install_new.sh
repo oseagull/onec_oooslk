@@ -54,7 +54,7 @@ install_from_run() {
 
     case "$installer_type" in
       server)
-        run_components="server,ws,config_storage_server,$nls_install"
+        run_components="server,ws,server_admin,config_storage_server,liberica_jre,$nls_install"
         ;;
       server_crs) 
         run_components="server,ws,config_storage_server,$nls_install"
