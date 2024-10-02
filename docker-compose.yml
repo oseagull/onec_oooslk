@@ -1,7 +1,9 @@
 version: '3.8'
 
 x-db_common_config: &db_config
-    image: ${DOCKER_REGISTRY_URL}/pgp16:latest
+    image: ${DOCKER_REGISTRY_URL}/pgpro16:latest
+    stop_grace_period: 60s
+    stop_signal: SIGINT
     networks:
       - onec_net
     restart: always
@@ -41,14 +43,13 @@ services:
   db_small:
     <<: *db_config
     container_name: onec-pgpro16-small
-    ports:
-      - "${PG_PORT}:${PG_PORT}"
     environment:
       - INCLUDE_PGDEFAULT=yes
       - PG_PASSWORD=${PG_PASSWORD}
     hostname: db_small
     volumes:
       - pg_data_small:${PGDATA}
+      - ./pg16/pgdefault.conf:/pgdefault.conf:ro
 
   db_big:
     <<: *db_config
@@ -59,6 +60,7 @@ services:
     hostname: db_big
     volumes:
       - pg_data_big:${PGDATA}
+      - ./pg16/pgdefault.conf:/pgdefault.conf:ro
 
   pusk:
     image: segateekb/pusk:latest
@@ -81,6 +83,24 @@ services:
       - "traefik.http.services.pusk.loadbalancer.server.port=8080"
       - "traefik.http.routers.pusk.middlewares=auth"
 
+  pgadmin:
+    image: dpage/pgadmin4:8.12
+    hostname: pgadmin
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_LISTEN_ADDRESS=${PGADMIN_LISTEN_ADDRESS}
+      - PGADMIN_DISABLE_POSTFIX=${PGADMIN_DISABLE_POSTFIX}
+    networks:
+      - onec_net
+    expose:
+      - 80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.oooslk.ru`)"
+      - "traefik.http.routers.pgadmin.entrypoints=web"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
 
   traefik: 
     image: traefik:v2.5

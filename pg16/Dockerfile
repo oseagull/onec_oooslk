@@ -3,17 +3,17 @@ FROM docker.io/library/debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Europe/Moscow \
     PGDATA=/var/lib/1c/pgdata \
-    PGSOCKET=/tmp/postgresql/socket \
-    PATH=/opt/pgpro/1c-16/bin:$PATH
+    PGSOCKET=/tmp/postgresql/socket
 
-COPY pgpro-repo-add.sh entrypoint.sh pgdefault.conf /
+COPY pgpro-repo-add.sh /
 
 RUN apt-get update && \
     apt-get install -y locales tzdata apt-utils && \
     sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen && \
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=ru_RU.UTF-8 LANGUAGE=ru_RU:ru && \
-    chmod +x /pgpro-repo-add.sh /entrypoint.sh && \
+    chmod +x /pgpro-repo-add.sh && \
     /pgpro-repo-add.sh && \
     apt-get -y install \
         postgrespro-1c-16 \
@@ -29,6 +29,9 @@ RUN apt-get update && \
     chown -R postgres:postgres "$PGDATA" "$PGSOCKET" && \
     chmod 700 "$PGDATA" && \
     chmod 775 "$PGSOCKET"
+
+COPY entrypoint.sh pgdefault.conf /
+RUN chmod +x /entrypoint.sh
 
 ENV LANG=ru_RU.UTF-8 \
     LANGUAGE=ru_RU:ru \
