@@ -55,9 +55,8 @@ COPY ./logcfg.xml /opt/1cv8/current/conf
 RUN apt-get update && apt-get install -y apache2 && \
   rm -rf /var/lib/apt/lists/* /var/cache/debconf
 COPY ./docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN ln -s usr/local/bin/docker-entrypoint.sh /  # backwards compat
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh /opt/1cv8/current/ragent && \
-  chmod -x /opt/1cv8/current/dbda
+RUN ln -s usr/local/bin/docker-entrypoint.sh / 
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /opt/1cv8/current/ragent
 
 # Настройка точки входа и экспонирование портов
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
