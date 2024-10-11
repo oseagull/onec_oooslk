@@ -27,6 +27,7 @@ services:
     environment:
       - TZ=${TZ}
       - INFOBASE_NAMES=${INFOBASE_NAMES}
+      - JAVA_HOME=${JAVA_HOME}
     networks:
       - onec_net
     expose:
