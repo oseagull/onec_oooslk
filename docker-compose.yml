@@ -1,3 +1,26 @@
+# Docker Compose configuration for a 1C:Enterprise environment
+#
+# This setup includes:
+# - 1C:Enterprise server (srv)
+# - Two PostgresPro 16 databases (db_small and db_big)
+# - PUSK service for 1C administration
+# - pgAdmin for database management
+# - Traefik as a reverse proxy and load balancer
+#
+# Key features:
+# - Uses Docker networks for service isolation
+# - Implements Traefik for routing and SSL termination
+# - Persists data using Docker volumes
+# - Allows easy scaling of database resources
+# - Includes basic auth for PUSK access
+#
+# Environment variables are used for configuration (see .env file)
+# Ensure all required environment variables are set before running
+#
+# Note: This configuration exposes services to the internet. 
+# Ensure proper security measures are in place in a production environment.
+
+
 version: '3.8'
 
 x-db_common_config: &db_config
