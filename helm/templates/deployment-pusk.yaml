@@ -1,0 +1,67 @@
+{{- if .Values.pusk.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onec-enterprise.fullname" . }}-pusk
+  labels:
+    {{- include "onec-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pusk
+spec:
+  replicas: {{ .Values.pusk.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "onec-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: pusk
+  template:
+    metadata:
+      labels:
+        {{- include "onec-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: pusk
+    spec:
+      {{- with .Values.srv.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: pusk
+          image: "{{ .Values.pusk.image.repository }}:{{ .Values.pusk.image.tag }}"
+          imagePullPolicy: {{ .Values.pusk.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - name: pusk-data
+              mountPath: {{ .Values.pusk.persistence.data.mountPath | default "/data" }}
+            - name: pusk-logs
+              mountPath: {{ .Values.pusk.persistence.logs.mountPath | default "/logs" }}
+          resources:
+            {{- toYaml .Values.pusk.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: pusk-data
+          {{- if .Values.pusk.persistence.data.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "onec-enterprise.fullname" . }}-pusk-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: pusk-logs
+          {{- if .Values.pusk.persistence.logs.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "onec-enterprise.fullname" . }}-pusk-logs
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

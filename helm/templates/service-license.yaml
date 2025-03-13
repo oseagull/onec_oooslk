@@ -1,0 +1,23 @@
+{{- if .Values.license.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onec-enterprise.fullname" . }}-license
+  labels:
+    {{- include "onec-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: license
+spec:
+  type: ClusterIP
+  ports:
+    - port: 1560
+      targetPort: license
+      protocol: TCP
+      name: license
+    - port: 1541
+      targetPort: cluster
+      protocol: TCP
+      name: cluster
+  selector:
+    {{- include "onec-enterprise.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: license
+{{- end }}

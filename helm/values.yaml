@@ -1,0 +1,107 @@
+# Global configuration
+global:
+  imageRegistry: ""
+  storageClass: "standard"
+  timezone: "Europe/Moscow"
+
+# 1C Enterprise Server configuration
+srv:
+  enabled: true
+  image:
+    repository: onec-server
+    tag: "8.3"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  nodeSelector: 
+    kubernetes.io/hostname: "node1"  # Specify the node where 1C should run
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  persistence:
+    data:
+      enabled: true
+      size: 50Gi
+      accessMode: ReadWriteOnce
+      mountPath: /home/usr1cv8/.1cv8/1C/1cv8
+    logs:
+      enabled: true
+      size: 20Gi
+      accessMode: ReadWriteOnce
+      mountPath: /var/log/1C
+  env:
+    INFOBASE_NAMES: "trade"
+    JAVA_HOME: "/usr/lib/jvm/java-11"
+
+# License Server configuration
+license:
+  enabled: true
+  image:
+    repository: onec-server
+    tag: "8.3"
+    pullPolicy: IfNotPresent
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessMode: ReadWriteOnce
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# PUSK service configuration
+pusk:
+  enabled: true
+  image:
+    repository: segateekb/pusk
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  persistence:
+    data:
+      enabled: true
+      size: 1Gi
+      accessMode: ReadWriteOnce
+      mountPath: /data
+    logs:
+      enabled: true
+      size: 1Gi
+      accessMode: ReadWriteOnce
+      mountPath: /logs
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: onec.oooslk.ru
+  basicAuth:
+    enabled: true
+    username: admin
+    # Generate password hash using: htpasswd -nb admin <password>
+    password: ""
+  tls: []
+    # - secretName: onec-tls
+    #   hosts:
+    #     - onec.oooslk.ru
+
+# Yandex Cloud PostgreSQL configuration
+ycPostgres:
+  host: ""  # Required: YC PostgreSQL endpoint
+  port: 6432
+  database: trade
+  existingSecret: ""  # Name of existing secret containing database credentials with username and password keys

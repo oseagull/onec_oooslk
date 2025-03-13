@@ -1,0 +1,65 @@
+{{- if .Values.license.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onec-enterprise.fullname" . }}-license
+  labels:
+    {{- include "onec-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: license
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "onec-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: license
+  template:
+    metadata:
+      labels:
+        {{- include "onec-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: license
+    spec:
+      {{- with .Values.srv.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 2000
+        runAsUser: 1000
+      containers:
+        - name: license
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.license.image.repository }}:{{ .Values.license.image.tag }}"
+          imagePullPolicy: {{ .Values.license.image.pullPolicy }}
+          ports:
+            - name: license
+              containerPort: 1560
+              protocol: TCP
+            - name: cluster
+              containerPort: 1541
+              protocol: TCP
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone | quote }}
+          volumeMounts:
+            - name: license-data
+              mountPath: /var/1C/licenses
+          resources:
+            {{- toYaml .Values.license.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: license
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: license
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: license-data
+          {{- if .Values.license.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "onec-enterprise.fullname" . }}-license-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

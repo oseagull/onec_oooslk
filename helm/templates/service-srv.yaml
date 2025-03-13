@@ -1,0 +1,31 @@
+{{- if .Values.srv.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onec-enterprise.fullname" . }}-srv
+  labels:
+    {{- include "onec-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: srv
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 1545
+      targetPort: ras
+      protocol: TCP
+      name: ras
+    - port: 1540
+      targetPort: manager
+      protocol: TCP
+      name: manager
+    - port: 1541
+      targetPort: agent
+      protocol: TCP
+      name: agent
+  selector:
+    {{- include "onec-enterprise.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: srv
+{{- end }}

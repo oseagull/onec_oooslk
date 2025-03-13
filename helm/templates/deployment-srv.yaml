@@ -1,0 +1,98 @@
+{{- if .Values.srv.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onec-enterprise.fullname" . }}-srv
+  labels:
+    {{- include "onec-enterprise.labels" . | nindent 4 }}
+    app.kubernetes.io/component: srv
+spec:
+  replicas: 1  # 1C Server doesn't support multiple replicas
+  selector:
+    matchLabels:
+      {{- include "onec-enterprise.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: srv
+  template:
+    metadata:
+      labels:
+        {{- include "onec-enterprise.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: srv
+    spec:
+      {{- with .Values.srv.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 2000
+        runAsUser: 1000
+      containers:
+        - name: srv
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.srv.image.repository }}:{{ .Values.srv.image.tag }}"
+          imagePullPolicy: {{ .Values.srv.image.pullPolicy }}
+          ports:
+            - name: ras
+              containerPort: 1545
+            - name: manager
+              containerPort: 1540
+            - name: agent
+              containerPort: 1541
+            - name: http
+              containerPort: 80
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone | quote }}
+            - name: INFOBASE_NAMES
+              value: {{ .Values.srv.env.INFOBASE_NAMES | quote }}
+            - name: JAVA_HOME
+              value: {{ .Values.srv.env.JAVA_HOME | quote }}
+            - name: LICENSE_SRV
+              value: {{ include "onec-enterprise.fullname" . }}-license
+            - name: POSTGRES_HOST
+              value: {{ required "PostgreSQL host is required" .Values.ycPostgres.host | quote }}
+            - name: POSTGRES_PORT
+              value: {{ .Values.ycPostgres.port | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.ycPostgres.database | quote }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "PostgreSQL secret name is required" .Values.ycPostgres.existingSecret }}
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ycPostgres.existingSecret }}
+                  key: password
+          volumeMounts:
+            - name: srv-data
+              mountPath: /home/usr1cv8/.1cv8/1C/1cv8
+            - name: srv-logs
+              mountPath: /var/log/1C
+          resources:
+            {{- toYaml .Values.srv.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: ras
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: ras
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: srv-data
+          {{- if .Values.srv.persistence.data.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "onec-enterprise.fullname" . }}-srv-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: srv-logs
+          {{- if .Values.srv.persistence.logs.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "onec-enterprise.fullname" . }}-srv-logs
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}
