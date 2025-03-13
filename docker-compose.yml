@@ -87,12 +87,24 @@ services:
       - ./pg16/pgdefault.conf:/pgdefault.conf:ro
 
   pusk:
-    image: segateekb/pusk:latest
+    image: ${DOCKER_REGISTRY_URL}/pusk:1.2.1
     container_name: pusk
     hostname: pusk
     volumes:
       - pusk_data:${PUSK_DATA}
       - pusk_log:${PUSK_LOG}
+      - ./secrets:/run/secrets:ro
+    environment:
+      - PUSK_DIR=/opt/pusk
+      - CRYPTOGRAPHY_KEY_FILE=/run/secrets/crypto_key.txt
+      - SECURITY_SALT_FILE=/run/secrets/security_salt.txt
+      - LOGGING_LEVEL=INFO
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     restart: always
     networks:
       - onec_net
@@ -105,7 +117,6 @@ services:
       - "traefik.http.routers.pusk.rule=Host(`onec.oooslk.ru`)"
       - "traefik.http.routers.pusk.entrypoints=pusk"
       - "traefik.http.services.pusk.loadbalancer.server.port=8080"
-      - "traefik.http.routers.pusk.middlewares=auth"
 
   pgadmin:
     image: dpage/pgadmin4:8.12
@@ -150,7 +161,6 @@ services:
       - onec_net 
     labels:
     - "traefik.enable=true"
-    - "traefik.http.middlewares.auth.basicauth.users=${PUSK_PASS}"
 
 volumes:
   srv_data: {}
